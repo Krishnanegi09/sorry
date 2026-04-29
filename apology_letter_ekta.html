@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<style>
+  :root {
+    --bg: #fdf6f9;
+    --bg2: #f9eef4;
+    --card: #fffbfd;
+    --text: #3d2535;
+    --text2: #7a5568;
+    --text3: #a07090;
+    --accent: #d4789a;
+    --accent2: #b07eb8;
+    --accent3: #8ab4d8;
+    --border: rgba(180,120,160,0.15);
+    --heart: #e8a0bc;
+    --glow: rgba(212,120,154,0.12);
+  }
+  .dark {
+    --bg: #1a0f17;
+    --bg2: #221520;
+    --card: #2a1a24;
+    --text: #f5e6ef;
+    --text2: #c9a0b8;
+    --text3: #997085;
+    --accent: #e8a0bc;
+    --accent2: #c89ed0;
+    --accent3: #90c0e0;
+    --border: rgba(232,160,188,0.15);
+    --heart: #e8a0bc;
+    --glow: rgba(232,160,188,0.08);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    transition: background 0.5s, color 0.5s;
+    overflow-x: hidden;
+  }
+
+  #particles { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; }
+
+  .mode-toggle {
+    position: fixed; top: 1.2rem; right: 1.4rem; z-index: 999;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 30px; padding: 6px 14px;
+    cursor: pointer; font-size: 13px; color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.3s; box-shadow: 0 2px 16px var(--glow);
+  }
+  .mode-toggle:hover { transform: scale(1.04); }
+
+  .music-btn {
+    position: fixed; top: 1.2rem; left: 1.4rem; z-index: 999;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 30px; padding: 6px 14px;
+    cursor: pointer; font-size: 13px; color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.3s; box-shadow: 0 2px 16px var(--glow);
+  }
+  .music-btn:hover { transform: scale(1.04); }
+  .music-eq { display:flex; align-items:flex-end; gap:2px; height:14px; }
+  .music-eq span {
+    width:3px; background:var(--accent); border-radius:2px;
+    animation: eq 0.8s ease-in-out infinite alternate;
+  }
+  .music-eq span:nth-child(2) { animation-delay: 0.2s; }
+  .music-eq span:nth-child(3) { animation-delay: 0.4s; }
+  .music-eq.paused span { animation-play-state: paused; height: 4px !important; }
+  @keyframes eq {
+    0% { height: 4px; }
+    100% { height: 14px; }
+  }
+
+  .hero {
+    position: relative; z-index:1;
+    min-height: 100vh;
+    display: flex; flex-direction:column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 2rem;
+    overflow: hidden;
+  }
+  .hero-bg {
+    position:absolute; inset:0;
+    background: radial-gradient(ellipse 80% 60% at 50% 40%, var(--glow) 0%, transparent 70%);
+    pointer-events:none;
+  }
+  .hero-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(3.5rem, 10vw, 7rem);
+    font-weight: 300;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    line-height: 1;
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  .hero-sub {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1rem, 3vw, 1.4rem);
+    font-style: italic;
+    color: var(--text3);
+    margin-top: 1rem;
+    letter-spacing: 0.06em;
+    opacity: 0;
+  }
+  #typed-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.1rem, 3vw, 1.5rem);
+    color: var(--text2);
+    margin-top: 2rem;
+    max-width: 480px;
+    line-height: 1.8;
+    min-height: 3em;
+    font-style: italic;
+    opacity: 0;
+  }
+  .cursor {
+    display:inline-block; width:2px; height:1.1em;
+    background:var(--accent); vertical-align:middle;
+    animation: blink 1s step-end infinite;
+    border-radius:1px;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .scroll-hint {
+    position: absolute; bottom: 2.5rem;
+    display: flex; flex-direction:column; align-items:center; gap:6px;
+    color: var(--text3); font-size:12px; letter-spacing:0.1em;
+    text-transform:uppercase;
+    animation: float 2s ease-in-out infinite;
+    opacity: 0;
+  }
+  .scroll-arrow {
+    width:20px; height:20px; border-right:1px solid var(--accent3); border-bottom:1px solid var(--accent3);
+    transform:rotate(45deg); margin-top:-4px;
+  }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
+
+  .divider {
+    position:relative; z-index:1;
+    display:flex; align-items:center; justify-content:center;
+    padding: 1rem 2rem; gap:1rem;
+  }
+  .divider-line {
+    flex:1; max-width:200px;
+    height:1px; background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+  .divider-heart { color:var(--heart); font-size:14px; }
+
+  .message-section {
+    position:relative; z-index:1;
+    padding: 3rem 1.5rem 5rem;
+    max-width: 700px; margin: 0 auto;
+  }
+  .message-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: clamp(1.8rem, 5vw, 3.5rem);
+    box-shadow: 0 8px 48px var(--glow), 0 1px 0 rgba(255,255,255,0.5) inset;
+    position: relative; overflow: hidden;
+  }
+  .message-card::before {
+    content:'';
+    position:absolute; top:-60px; right:-60px;
+    width:200px; height:200px;
+    border-radius:50%;
+    background: radial-gradient(circle, var(--glow) 0%, transparent 70%);
+    pointer-events:none;
+  }
+  .para-line {
+    margin-bottom: 1.4rem;
+    font-size: clamp(0.9rem, 2.2vw, 1rem);
+    line-height: 1.85;
+    color: var(--text);
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.6s, transform 0.6s;
+  }
+  .para-line.visible { opacity:1; transform:translateY(0); }
+  .para-line.emotional {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: clamp(1rem, 2.5vw, 1.15rem);
+    color: var(--accent2);
+    line-height: 1.9;
+  }
+  .para-line.highlight {
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .salutation {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.4rem, 4vw, 1.9rem);
+    color: var(--accent);
+    font-style: italic;
+    margin-bottom: 1.8rem;
+    opacity:0; transform:translateY(18px);
+    transition: opacity 0.6s, transform 0.6s;
+  }
+  .salutation.visible { opacity:1; transform:translateY(0); }
+  .sign-off {
+    margin-top: 2rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1rem, 3vw, 1.25rem);
+    color: var(--text3);
+    font-style: italic;
+    opacity:0; transform:translateY(18px);
+    transition: opacity 0.6s, transform 0.6s;
+  }
+  .sign-off.visible { opacity:1; transform:translateY(0); }
+
+  /* ===== MEMORIES SLIDESHOW ===== */
+  .memories-section {
+    position:relative; z-index:1;
+    padding: 2rem 1.5rem 3rem;
+    max-width: 700px; margin: 0 auto;
+  }
+  .memories-title {
+    text-align:center;
+    font-family:'Cormorant Garamond',serif;
+    font-size:clamp(1.2rem,3vw,1.6rem);
+    font-style:italic; color:var(--text3);
+    margin-bottom:1.8rem;
+    opacity:0; transform:translateY(16px);
+    transition:opacity 0.6s,transform 0.6s;
+  }
+  .memories-title.visible { opacity:1; transform:translateY(0); }
+
+  .slideshow-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.2rem;
+  }
+  .slide {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    width: 100%;
+    animation: fadeSlide 0.7s ease forwards;
+  }
+  .slide.active { display: flex; }
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .slide-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--text3);
+    letter-spacing: 0.05em;
+  }
+  .media-frame {
+    width: 100%;
+    max-width: 380px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    background: var(--bg2);
+    display: flex; align-items: center; justify-content: center;
+    min-height: 260px;
+    box-shadow: 0 4px 32px var(--glow);
+  }
+  .media-frame video { width: 100%; height: auto; display: block; }
+  .media-frame img  { width: 100%; height: auto; display: block; }
+
+  .slide-nav {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    margin-top: 0.5rem;
+  }
+  .slide-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 8px 22px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.25s;
+    box-shadow: 0 2px 10px var(--glow);
+  }
+  .slide-btn:disabled { opacity: 0.3; cursor: default; }
+  .slide-btn:not(:disabled):hover { background: var(--bg2); color: var(--accent); border-color: var(--accent); }
+
+  .slide-dots { display: flex; gap: 7px; align-items: center; }
+  .slide-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--border);
+    border: 1px solid var(--accent);
+    transition: background 0.3s, transform 0.3s;
+    cursor: pointer;
+  }
+  .slide-dot.active { background: var(--accent); transform: scale(1.3); }
+  .slide-counter {
+    font-size: 12px;
+    color: var(--text3);
+    letter-spacing: 0.05em;
+    text-align: center;
+    margin-top: 0.4rem;
+  }
+
+  .final-section {
+    position:relative; z-index:1;
+    padding: 3rem 2rem 6rem;
+    text-align: center;
+    display:flex; flex-direction:column; align-items:center; gap:1.5rem;
+  }
+  .final-quote {
+    font-family:'Cormorant Garamond',serif;
+    font-size:clamp(1rem,3vw,1.3rem);
+    font-style:italic; color:var(--text3);
+    max-width:380px; line-height:1.8;
+    opacity:0; transform:translateY(16px);
+    transition:opacity 0.6s,transform 0.6s;
+  }
+  .final-quote.visible { opacity:1; transform:translateY(0); }
+  .btn-primary {
+    font-family:'DM Sans',sans-serif;
+    font-size:15px; font-weight:500;
+    padding:14px 38px; border-radius:50px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:white; border:none; cursor:pointer;
+    letter-spacing:0.04em;
+    box-shadow:0 4px 24px var(--glow);
+    transition:transform 0.25s, box-shadow 0.25s;
+    opacity:0; transform:translateY(16px);
+  }
+  .btn-primary:hover { transform:translateY(-2px) scale(1.03); box-shadow:0 8px 32px rgba(180,100,140,0.3); }
+  .btn-primary.visible { opacity:1; transform:translateY(0); }
+  .btn-secondary {
+    font-family:'DM Sans',sans-serif;
+    font-size:13px; font-weight:400;
+    padding:10px 28px; border-radius:50px;
+    background:transparent; color:var(--text3);
+    border:1px solid var(--border); cursor:pointer;
+    letter-spacing:0.04em;
+    transition:all 0.25s;
+    opacity:0; transform:translateY(16px);
+  }
+  .btn-secondary:hover { background:var(--card); color:var(--accent); border-color:var(--accent); }
+  .btn-secondary.visible { opacity:1; transform:translateY(0); }
+
+  .floating-heart {
+    position:fixed; pointer-events:none; z-index:0;
+    font-size:14px; opacity:0; animation: floatUp 6s ease-in forwards;
+  }
+
+  .music-popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.popup-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2rem 2.5rem;
+  text-align: center;
+  box-shadow: 0 10px 40px var(--glow);
+  animation: fadeIn 0.5s ease;
+}
+
+.popup-card p {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  color: var(--text);
+}
+
+.popup-card button {
+  margin: 0 8px;
+  padding: 10px 20px;
+  border-radius: 30px;
+  border: none;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: white;
+  transition: transform 0.2s;
+}
+
+.popup-card button:hover {
+  transform: scale(1.05);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+  @keyframes floatUp {
+    0% { opacity:0; transform:translateY(0) scale(0.5); }
+    10% { opacity:0.6; }
+    80% { opacity:0.3; }
+    100% { opacity:0; transform:translateY(-60vh) scale(1.2); }
+  }
+
+  @keyframes heartbeat {
+    0%,100%{transform:scale(1)}
+    14%{transform:scale(1.1)}
+    28%{transform:scale(1)}
+    42%{transform:scale(1.08)}
+    70%{transform:scale(1)}
+  }
+  .heartbeat { animation: heartbeat 2s ease-in-out infinite; }
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+
+<!-- =====================================================
+     🎵 MUSIC: Replace YOUR_SONG_HERE.mp3 with your file
+     → Local file  : src="song.mp3"
+     → Online link : src="https://example.com/song.mp3"
+     Free songs    : pixabay.com  |  chosic.com
+======================================================= -->
+<audio id="bgMusic" loop preload="auto">
+  <source src="us.mp3" type="audio/mpeg" autoload="auto"/>
+</audio>
+<!-- MUSIC POPUP -->
+<div id="musicPopup" class="music-popup">
+  <div class="popup-card">
+    <p>🎵 Play music for better experience?</p>
+    <button onclick="startMusic()">Play</button>
+    <button onclick="closePopup()">No Thanks</button>
+  </div>
+</div>
+
+<button class="mode-toggle" onclick="toggleDark()" id="modeBtn">🌙 Dark mode</button>
+<button class="music-btn" onclick="toggleMusic()" id="musicBtn">
+  <div class="music-eq paused" id="eq"><span style="height:4px"></span><span style="height:8px"></span><span style="height:4px"></span></div>
+  <span id="musicLabel">Music</span>
+</button>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-name" id="heroName">Hi, Queen Ekta</div>
+  <div class="hero-sub" id="heroSub">There's something I've been wanting to say…</div>
+  <p id="typed-text"><span id="typed-content"></span><span class="cursor" id="cursor"></span></p>
+  <div class="scroll-hint" id="scrollHint">
+    <span>scroll</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<div class="divider"><div class="divider-line"></div><span class="divider-heart">♡</span><div class="divider-line"></div></div>
+
+<!-- MESSAGE -->
+<section class="message-section">
+  <div class="message-card">
+    <div class="salutation" data-observe>Hi Ekta,</div>
+    <p class="para-line emotional" data-observe>
+      So hey, Queen Ekta mujhe shi mai ni pta ki what just got changed.
+    </p>
+    <p class="para-line" data-observe>
+      A night before you ended everything we were generating our childhood pics with eachother.
+    </p>
+    <p class="para-line" data-observe>
+      Even did a soft launching for few mintues on instagram. Honestly mujhe ni pta ki what just got changed in your mind. I know you have your reasons, but I just wish you could share them with me.
+    </p>
+    <p class="para-line highlight" data-observe>
+      Like i genuinly respect your decision but dont know you thing we should have figure out something rather than just ending this... Sorry if this is coming out as desperate but I just want to understand what went wrong and if there is any chance to fix it.
+    </p>
+    <p class="para-line" data-observe>
+      But you know i m a person who belives in fixing things rather than just leaving them. like trust me i have always asked to tell me what things you dont like about me and i have always tried to work on them. I know i m not perfect but i have always tried to be better for you.
+    </p>
+    <p class="para-line emotional" data-observe>
+      I am not forcing you to fix it.. afterall its hard for you also to just end something which was so good and so pure. But you know what just worst is we talked till around 6 pm on monday and by 8 pm you texted that like what just went wrong in that 2 hours that is hurting me..
+    </p>
+    <p class="para-line" data-observe>
+      Esa bhi ni tha ki we ended call on bad note.. we were talking as usual and then suddenly.. chlo chado
+    </p>
+    <p class="para-line highlight" data-observe>
+      so i just wanted to say ki apna dhyan rhkna aap... the world is really harsh and being too nice is really hard in this world and honestly you are such a kind soul who things of other people feeling before your own..
+    </p>
+    <p class="para-line" data-observe>
+      So just wanted to say ki start thinking of yours and be happy for yourself.. you really deserve the best in this world.. and vese bhi i was not the person who should be with ... kyuki i m not that good as you are so isliye ending with me is also a good decision for you..
+    </p>
+    <p class="para-line emotional" data-observe>
+      Enjoy your life and be happy.. and i m sorry for everything, sorry for not being good enough, sorry for not being able to make you happy, sorry for everything that i did wrong.. i m really sorry and i hope you will forgive me someday..
+      you know i hate Goodbyes but i guess this is the only way to say you that i care for you and i will always care for you no matter what happens..
+    </p>
+    <div class="sign-off" data-observe>Dhyan rkhna 🌸</div>
+  </div>
+</section>
+
+<div class="divider"><div class="divider-line"></div><span class="divider-heart">♡</span><div class="divider-line"></div></div>
+
+<!-- MEMORIES SLIDESHOW -->
+<section class="memories-section">
+  <div class="memories-title" data-observe>Some moments live on…</div>
+  <div class="slideshow-wrapper">
+    <div class="slide active" id="slide-0">
+      <div class="slide-label">A moment we made</div>
+      <div class="media-frame">
+        <video src="WhatsApp Video 2026-04-29 at 11.09.23.mp4" autoplay loop muted playsinline></video>
+      </div>
+    </div>
+    <div class="slide" id="slide-1">
+      <div class="slide-label">Us 🌸</div>
+      <div class="media-frame">
+        <img src="us.jpeg" alt="us" />
+      </div>
+    </div>
+    <div class="slide-nav">
+      <button class="slide-btn" id="prevBtn" onclick="changeSlide(-1)" disabled>← Prev</button>
+      <div class="slide-dots" id="slideDots"></div>
+      <button class="slide-btn" id="nextBtn" onclick="changeSlide(1)">Next →</button>
+    </div>
+    <div class="slide-counter" id="slideCounter">1 / 2</div>
+  </div>
+</section>
+
+<!-- FINAL -->
+<section class="final-section">
+  <p class="final-quote" data-observe>"Some goodbyes are not final — they are just the universe asking us to be sure."</p>
+  <button class="btn-primary heartbeat" id="careBtn" data-observe onclick="showLove()">Dhyan Rhkna Apna 🩵</button>
+  <button class="btn-secondary" id="replyBtn" data-observe onclick="handleReply()">Text me whenever you feel alone</button>
+</section>
+
+<script>
+// ===== DARK MODE =====
+let isDark = false;
+function toggleDark(){
+  isDark = !isDark;
+  document.body.classList.toggle('dark', isDark);
+  document.getElementById('modeBtn').textContent = isDark ? '☀️ Light mode' : '🌙 Dark mode';
+}
+
+// ===== MUSIC =====
+// Browsers block autoplay until the user interacts with the page.
+// So we start music on the very first click or tap anywhere.
+const bgMusic = document.getElementById('bgMusic');
+bgMusic.volume = 0.4;
+let musicPlaying = false;
+
+function startMusic(){
+  bgMusic.play().then(()=>{
+    musicPlaying = true;
+    document.getElementById('eq').classList.remove('paused');
+    document.getElementById('musicLabel').textContent = 'Pause';
+  }).catch(()=>{});
+  closePopup();
+}
+
+function closePopup(){
+  const popup = document.getElementById('musicPopup');
+  popup.style.opacity = '0';
+  popup.style.pointerEvents = 'none';
+  setTimeout(()=> popup.remove(), 400);
+}
+
+function tryAutoplay(){
+  if(!musicPlaying){
+    bgMusic.play().then(()=>{
+      musicPlaying = true;
+      document.getElementById('eq').classList.remove('paused');
+      document.getElementById('musicLabel').textContent = 'Pause';
+    }).catch(()=>{});
+  }
+  document.removeEventListener('click', tryAutoplay);
+  document.removeEventListener('touchstart', tryAutoplay);
+}
+
+
+
+function toggleMusic(){
+  if(musicPlaying){
+    bgMusic.pause();
+    musicPlaying = false;
+    document.getElementById('eq').classList.add('paused');
+    document.getElementById('musicLabel').textContent = 'Music';
+  } else {
+    bgMusic.play();
+    musicPlaying = true;
+    document.getElementById('eq').classList.remove('paused');
+    document.getElementById('musicLabel').textContent = 'Pause';
+  }
+}
+
+// ===== PARTICLES =====
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let particles = [];
+function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+resize(); window.addEventListener('resize', resize);
+function createParticle(){
+  return {
+    x:Math.random()*canvas.width, y:Math.random()*canvas.height,
+    r:Math.random()*2+0.5, vx:(Math.random()-0.5)*0.2, vy:(Math.random()-0.5)*0.2,
+    a:Math.random()*0.4+0.05,
+    color:['rgba(212,120,154,','rgba(176,126,184,','rgba(138,180,216,'][Math.floor(Math.random()*3)]
+  };
+}
+for(let i=0;i<70;i++) particles.push(createParticle());
+function animParticles(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  particles.forEach(p=>{
+    ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=p.color+p.a+')'; ctx.fill();
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0||p.x>canvas.width) p.vx*=-1;
+    if(p.y<0||p.y>canvas.height) p.vy*=-1;
+  });
+  requestAnimationFrame(animParticles);
+}
+animParticles();
+
+// ===== FLOATING HEARTS =====
+function spawnHeart(){
+  const h = document.createElement('div');
+  h.className='floating-heart';
+  h.textContent='♡';
+  h.style.left=Math.random()*90+'vw';
+  h.style.bottom='0';
+  h.style.color=['var(--accent)','var(--accent2)','var(--accent3)'][Math.floor(Math.random()*3)];
+  h.style.fontSize=(10+Math.random()*14)+'px';
+  h.style.animationDuration=(4+Math.random()*4)+'s';
+  document.body.appendChild(h);
+  setTimeout(()=>h.remove(),8000);
+}
+setInterval(spawnHeart, 2200);
+
+// ===== HERO ANIMATION =====
+window.addEventListener('load',()=>{
+  const heroName = document.getElementById('heroName');
+  const heroSub = document.getElementById('heroSub');
+  const typedEl = document.getElementById('typed-text');
+  const typedContent = document.getElementById('typed-content');
+  const scrollHint = document.getElementById('scrollHint');
+
+  setTimeout(()=>{
+    heroName.style.transition='opacity 1s, transform 1s';
+    heroName.style.opacity=1; heroName.style.transform='translateY(0)';
+  },300);
+  setTimeout(()=>{ heroSub.style.transition='opacity 1s'; heroSub.style.opacity=1; },1000);
+  setTimeout(()=>{
+    typedEl.style.transition='opacity 0.5s'; typedEl.style.opacity=1;
+    typeText("I've been carrying these words for a while now… and I think it's time you heard them.", typedContent);
+  },1800);
+  setTimeout(()=>{ scrollHint.style.transition='opacity 1s'; scrollHint.style.opacity=1; },5000);
+});
+
+function typeText(text, el){
+  let i=0;
+  const cursor = document.getElementById('cursor');
+  const int = setInterval(()=>{
+    el.textContent = text.slice(0,++i);
+    if(i>=text.length){ clearInterval(int); setTimeout(()=>cursor.style.display='none',1500); }
+  },45);
+}
+
+// ===== SCROLL OBSERVE =====
+const observer = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting){
+      const delay = parseInt(e.target.dataset.delay||0);
+      setTimeout(()=>e.target.classList.add('visible'), delay);
+      observer.unobserve(e.target);
+    }
+  });
+},{ threshold:0.15 });
+document.querySelectorAll('[data-observe]').forEach(el=>observer.observe(el));
+
+// ===== MEMORIES SLIDESHOW =====
+let currentSlide = 0;
+const totalSlides = 2;
+const slides = document.querySelectorAll('.slide');
+const dotsContainer = document.getElementById('slideDots');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const slideCounter = document.getElementById('slideCounter');
+
+for(let i=0;i<totalSlides;i++){
+  const d = document.createElement('div');
+  d.className = 'slide-dot' + (i===0?' active':'');
+  d.onclick = () => goToSlide(i);
+  dotsContainer.appendChild(d);
+}
+
+function goToSlide(n){
+  slides[currentSlide].classList.remove('active');
+  dotsContainer.children[currentSlide].classList.remove('active');
+  currentSlide = n;
+  slides[currentSlide].classList.add('active');
+  dotsContainer.children[currentSlide].classList.add('active');
+  prevBtn.disabled = currentSlide === 0;
+  nextBtn.disabled = currentSlide === totalSlides - 1;
+  slideCounter.textContent = (currentSlide+1) + ' / ' + totalSlides;
+}
+function changeSlide(dir){
+  const next = currentSlide + dir;
+  if(next >= 0 && next < totalSlides) goToSlide(next);
+}
+
+// ===== FINAL BUTTONS =====
+function showLove(){
+  for(let i=0;i<8;i++) setTimeout(spawnHeart, i*200);
+  const btn = document.getElementById('careBtn');
+  btn.textContent='Wishing you all the happiness 🌸';
+  btn.style.background='linear-gradient(135deg,#c8a4d0,#90c0e0)';
+}
+function handleReply(){
+  const btn = document.getElementById('replyBtn');
+  btn.textContent='You know where to find me… 💌';
+  btn.style.color='var(--accent)';
+  btn.style.borderColor='var(--accent)';
+}
+</script>
+</body>
+</html>
